@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Memory Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f4f4f4;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+    .info-panel {
+      margin-bottom: 20px;
+    }
+    #restart {
+      padding: 8px 16px;
+      font-size: 16px;
+      background-color: #ff7675;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 10px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .card {
+      background-color: #0984e3;
+      color: white;
+      font-size: 36px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 80px;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.2s;
+    }
+    .card.flipped {
+      background-color: #00b894;
+    }
+    .card.matched {
+      background-color: #636e72;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 Memory Game</h1>
+  <div class="info-panel">
+    <p>⏱ Time: <span id="timer">0</span>s</p>
+    <p>🧮 Moves: <span id="moves">0</span></p>
+    <button id="restart">🔁 Restart</button>
+  </div>
+  <div class="game-board" id="game-board"></div>
+
+  <script>
+    const board = document.getElementById("game-board");
+    const timerEl = document.getElementById("timer");
+    const movesEl = document.getElementById("moves");
+    const restartBtn = document.getElementById("restart");
+
+    const emojis = ['😀', '🎉', '🐱', '🍕', '🌈', '🚀', '❤', '🎵'];
+    let cards = [];
+    let flippedCards = [];
+    let matchedCards = [];
+    let moves = 0;
+    let timer = 0;
+    let timerInterval;
+
+    function shuffle(array) {
+      return array.sort(() => 0.5 - Math.random());
+    }
+
+    function startTimer() {
+      timer = 0;
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timer++;
+        timerEl.textContent = timer;
+      }, 1000);
+    }
+
+    function resetGame() {
+      board.innerHTML = "";
+      flippedCards = [];
+      matchedCards = [];
+      moves = 0;
+      timerEl.textContent = "0";
+      movesEl.textContent = "0";
+      clearInterval(timerInterval);
+      setupGame();
+    }
+
+    function setupGame() {
+      cards = shuffle([...emojis, ...emojis]);
+      cards.forEach((emoji, index) => {
+        const card = document.createElement("div");
+        card.classList.add("card");
+        card.dataset.emoji = emoji;
+        card.dataset.index = index;
+        card.textContent = "";
+        board.appendChild(card);
+
+        card.addEventListener("click", () => {
+          if (
+            card.classList.contains("matched") ||
+            card.classList.contains("flipped") ||
+            flippedCards.length === 2
+          ) return;
+
+          card.classList.add("flipped");
+          card.textContent = emoji;
+          flippedCards.push(card);
+
+          if (flippedCards.length === 1 && moves === 0) {
+            startTimer();
+          }
+
+          if (flippedCards.length === 2) {
+            moves++;
+            movesEl.textContent = moves;
+            const [first, second] = flippedCards;
+
+            if (first.dataset.emoji === second.dataset.emoji) {
+              first.classList.add("matched");
+              second.classList.add("matched");
+              matchedCards.push(first, second);
+              flippedCards = [];
+
+              if (matchedCards.length === cards.length) {
+                clearInterval(timerInterval);
+                setTimeout(() => {
+                  alert('🎉 You won in ${moves} moves and ${timer} seconds!');
+                }, 500);
+              }
+            } else {
+              setTimeout(() => {
+                first.classList.remove("flipped");
+                second.classList.remove("flipped");
+                first.textContent = "";
+                second.textContent = "";
+                flippedCards = [];
+              }, 800);
+            }
+          }
+        });
+      });
+    }
+
+    restartBtn.addEventListener("click", resetGame);
+    setupGame();
+  </script>
+</body>
+</html>
